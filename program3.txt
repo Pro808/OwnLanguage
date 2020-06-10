@@ -1,0 +1,4 @@
+int SomeNumber = 10;
+int SecondNumber = 20;
+bool Bool;
+SomeNumber = 2 + 2 * 2 + 2 ** 2;
