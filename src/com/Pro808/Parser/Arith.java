@@ -16,6 +16,14 @@ public class Arith extends Token {
         System.out.println("Создали Arith c OP: " + this.op.getType());
     }
 
+    private boolean isNumeric(){
+        if(expr1.getType() ==  TypeToken.KW_Num_Value || expr2.getType() == TypeToken.KW_Num_Value){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     public Token reduce(){
         int value1 = Integer.parseInt(expr1.getAttrib().get("numValue"));
         int value2 = Integer.parseInt(expr2.getAttrib().get("numValue"));
@@ -23,7 +31,7 @@ public class Arith extends Token {
 
         Token temp = new Token(TypeToken.KW_Num_Value, "name", "NumValue");
 
-        if(expr1.getType() ==  TypeToken.KW_Num_Value || expr2.getType() == TypeToken.KW_Num_Value){
+        if(isNumeric()){
             temp.cloneAttr(expr1.getAttrib());
             switch(op.getType()){
                 case KW_Op_Plus:{

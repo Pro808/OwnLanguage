@@ -178,24 +178,24 @@ public class Parser {
      assign_Expr ->  constant_Expr | value KW_End
      */
     private boolean isAssign_Expr(TypeToken assignType) throws LanguageException {
-        int interPosToken = posToken;
         nextToken();
         System.out.println("isAssignExpr получила токен под номером: " + posToken);
-       /* if (isConstant_Expr(assignType)) {
-            return true;
-        } else if (isValue()) {
-            return true;
-        } else {
-            throw exception("Ожидалась операция присваения: " + posToken());
-        }*/
-       /* if (isConstant_Expr(assignType)) {
-            return true;
-        }*/
-        Token temp = isLeft().reduce();
+        Token temp = isBool().reduce();
+        System.out.println("isAssignExpr ответ: " + temp);
         switch (assignType){
             case KW_Int:{
                 if(temp.getType() == TypeToken.KW_Num_Value){
                     System.out.println("Ответ числового выражения: " + temp.getAttrib().get("numValue"));
+                    getLastVar().getAttrib().put("numValue", temp.getAttrib().get("numValue"));
+                    return true;
+                }else{
+                    throw exception("Неправильное приведение типов: " + posToken());
+                }
+            }
+            case KW_Bool:{
+                if(temp.getType() == TypeToken.KW_Bool_Value){
+                    System.out.println("Ответ логического выражения: " + temp.getAttrib().get("boolValue"));
+                    getLastVar().getAttrib().put("boolValue", temp.getAttrib().get(temp.getAttrib().get("boolValue")));
                     return true;
                 }else{
                     throw exception("Неправильное приведение типов: " + posToken());
@@ -255,6 +255,19 @@ public class Parser {
         left - менее преоритетное значение
             left -> left KW_Op_Plus right | left KW_Op_Minus right | right
      */
+
+    public Token isBool() throws LanguageException {
+        System.out.println("isBool получила токен: " + currentToken);
+        Token x = isLeft();
+        while(typeNextToken() == TypeToken.KW_Eq || typeNextToken() == TypeToken.KW_Low || typeNextToken() == TypeToken.KW_More){
+            Token next = nextToken();
+            nextToken();
+            x = new Logic(next, x, isRight());
+        }
+        System.out.println("isBool вернуло токен: " + x);
+        return x;
+    }
+
     private Token isLeft() throws LanguageException {
         System.out.println("isLeft получила токен: " + currentToken);
         Token x = isRight();
@@ -284,12 +297,26 @@ public class Parser {
         switch (typeToken()){
             case KW_Round_Open_Bracket:{
                 nextToken();
-                isLeft();
-                break;
+                Token x = isBool();
+                nextToken();
+                if(typeToken() == TypeToken.KW_Round_Close_Bracket){
+                    return x;
+                }else{
+                    throw exception("Нету закрывающей скобки: " + posToken());
+                }
             }
+            case KW_String_Value:
+            case KW_Bool_Value:
             case KW_Num_Value:{
                 System.out.println("isValue вернуло число: " + currentToken);
                 return currentToken;
+            }
+            case KW_Name:{
+                if(existVar(currentToken.getAttrib().get("name"))){
+                    return vars.get(curVar);
+                }else{
+                    throw exception("Использованная переменная в выражении не определена: " + posToken());
+                }
             }
         }
         return null;
@@ -374,11 +401,13 @@ public class Parser {
         temp.addAttr("value", value);
         temp.addAttr("scope", Integer.toString(curScope));
         vars.add(temp);
+        curVar = vars.indexOf(temp);
     }
 
     private boolean existVar(String name) {
         for (Variable var : vars) {
             if (var.getAttrib().get("name").equals(name)) {
+                curVar = vars.indexOf(var);
                 return true;
             }
         }
@@ -386,7 +415,7 @@ public class Parser {
     }
 
     private Variable getLastVar() {
-        return vars.get(vars.size() - 1);
+        return vars.get(curVar);
     }
 
     private boolean isClose() {

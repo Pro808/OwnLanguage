@@ -31,6 +31,10 @@ public class Token {
         return this;
     }
 
+    public void setType(TypeToken type){
+        this.type = type;
+    }
+
     public TypeToken getType() {
         return type;
     }

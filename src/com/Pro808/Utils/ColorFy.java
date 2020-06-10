@@ -94,7 +94,7 @@ public class ColorFy {
                     break;
                 }
                 case KW_Bool_Value:{
-                    str.append(createSpan("#6897BBFF;", token.getAttrib().get("BoolValue")));
+                    str.append(createSpan("#6897BBFF;", token.getAttrib().get("boolValue")));
                     break;
                 }
                 case KW_Assign:
@@ -124,6 +124,18 @@ public class ColorFy {
                 }
                 case KW_Op_Mul:{
                     str.append(createSpan("#FFE959", "*"));
+                    break;
+                }
+                case KW_Eq:{
+                    str.append(createSpan("#FFE959", "=="));
+                    break;
+                }
+                case KW_Low:{
+                    str.append(createSpan("#FFE959", "<"));
+                    break;
+                }
+                case KW_More:{
+                    str.append(createSpan("#FFE959", ">"));
                     break;
                 }
                 case KW_Round_Open_Bracket:{

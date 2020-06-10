@@ -80,7 +80,7 @@ public class Lexer {
 
     private void addToken(Token token){
         if(debug){
-            System.out.println("Added Token: " + token.getAttrib().get("name"));
+            System.out.println("Added Token: " + token);
         }
         Token temp = new Token(token);
         temp.getAttrib().put("pos", Integer.toString(current-1));
@@ -188,13 +188,24 @@ public class Lexer {
                 Token exist = null;
                 for (Token token : words) {
                     if (str.equals(token.getAttrib().get("name"))) {
-                        exist = token;
+                        Token temp = new Token(token);
+                        exist = temp;
                     }
                 }
                 if(exist == null){
                     words.add(newToken);
                     addToken(newToken);
                 }else{
+                    if(exist.getAttrib().get("name") == "true"){
+                        exist.setType(TypeToken.KW_Bool_Value);
+                        exist.getAttrib().put("name", "BoolValue");
+                        exist.addAttr("boolValue", "true");
+                    }
+                    if(exist.getAttrib().get("name") == "false"){
+                        exist.setType(TypeToken.KW_Bool_Value);
+                        exist.getAttrib().put("name", "BoolValue");
+                        exist.addAttr("boolValue", "false");
+                    }
                     addToken(exist);
                 }
             }
