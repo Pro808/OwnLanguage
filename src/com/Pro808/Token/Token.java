@@ -1,5 +1,7 @@
 package com.Pro808.Token;
 
+import com.Pro808.LanguageException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,6 +39,10 @@ public class Token {
 
     public TypeToken getType() {
         return type;
+    }
+
+    public Token getOpToken(){
+        return this;
     }
 
     public HashMap<String, String> getAttrib() {

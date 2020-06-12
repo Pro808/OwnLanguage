@@ -13,25 +13,40 @@ public class Arith extends Token {
         this.op = op;
         this.expr1 = expr1.reduce();
         this.expr2 = expr2.reduce();
+        if(!isNumeric()) {
+            Token error = new Token(TypeToken.KW_Error, "name", "Не возможно выполнить арифметическую операцию. Оба токена должны иметь тип числа: ");
+            this.op = error;
+        }
         System.out.println("Создали Arith c OP: " + this.op.getType());
     }
 
     private boolean isNumeric(){
-        if(expr1.getType() ==  TypeToken.KW_Num_Value || expr2.getType() == TypeToken.KW_Num_Value){
+        if(expr1.getType() ==  TypeToken.KW_Num_Value && expr2.getType() == TypeToken.KW_Num_Value){
             return true;
         }else{
             return false;
         }
     }
 
+    public TypeToken getType(){
+        return this.op.getType();
+    }
+
+    public Token getOpToken(){
+        return this.op;
+    }
+
     public Token reduce(){
-        int value1 = Integer.parseInt(expr1.getAttrib().get("numValue"));
-        int value2 = Integer.parseInt(expr2.getAttrib().get("numValue"));
+        int value1 = 0;
+        int value2 = 0;
         int value = 0;
 
         Token temp = new Token(TypeToken.KW_Num_Value, "name", "NumValue");
 
         if(isNumeric()){
+            value1 = Integer.parseInt(expr1.getAttrib().get("numValue"));
+            value2 = Integer.parseInt(expr2.getAttrib().get("numValue"));
+
             temp.cloneAttr(expr1.getAttrib());
             switch(op.getType()){
                 case KW_Op_Plus:{
@@ -61,13 +76,10 @@ public class Arith extends Token {
             temp.addAttr("numValue", Integer.toString(value));
             return temp;
         }else{
-            try {
-                throw new LanguageException("Не возможное приведение типов: " + expr1.getAttrib().get("pos"));
-            } catch (LanguageException e) {
-                e.printStackTrace();
-            }
+            Token error = new Token(TypeToken.KW_Error, "name", "Не возможно выполнить арифметическую операцию. Оба токена должны иметь тип числа: ");
+            this.op = error;
+            return error;
         }
-        return this;
     }
 
     @Override
