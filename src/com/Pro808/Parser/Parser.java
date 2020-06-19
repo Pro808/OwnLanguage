@@ -88,7 +88,6 @@ import com.Pro808.Token.Token;
 import com.Pro808.Token.TypeToken;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class Parser {
 
@@ -107,12 +106,13 @@ public class Parser {
 
     private Token nextToken() throws LanguageException {
         posToken++;
-        try{
-            currentToken = tokens.get(posToken);
-        } catch (Exception ex) {
+        if(posToken > tokens.size()-1)
+        {
             posToken--;
-            throw exception("Ошибка обработки кода : " + posToken + " Tokens: " + tokens.size());
+        }else{
+            currentToken = tokens.get(posToken);
         }
+        currentToken.getAttrib().put("scope", Integer.toString(curScope));
         return currentToken;
     }
 
@@ -131,7 +131,13 @@ public class Parser {
 
     private TypeToken typeNextToken() {
         int temp = posToken + 1;
-        return tokens.get(temp).getType();
+        if(temp > tokens.size()-1)
+        {
+            temp = tokens.size()-1;
+            return tokens.get(temp).getType();
+        }else{
+            return tokens.get(temp).getType();
+        }
     }
 
     /*        program -> expr*/
@@ -144,11 +150,14 @@ public class Parser {
     /*
             expr -> assign_Expr | while_statement | for_statement | if_statement
      */
-    private void expr() throws LanguageException {
+    private boolean expr() throws LanguageException {
         nextToken();
-        if (!isDecl()) {
+        System.out.println("Следующий токен: " + currentToken);
+        if (!isDecl() || !isIf() || !isFor()) {
             throw exception("Не правильное написание начала кода");
         }
+        System.out.println("Обработано токенов " + posToken + " из " + (tokens.size() - 1));
+        return true;
     }
 
     /*
@@ -158,17 +167,101 @@ public class Parser {
         if (isVar()) {
             Variable temp = getLastVar();
             if (typeToken() == TypeToken.KW_Assign) {
+                System.out.println("Перед Assign получили: " + temp);
                 if (isAssign_Expr(temp)) {
                     nextToken();
-                    return true;
+                    if(typeToken() == TypeToken.KW_End) {
+                        return true;
+                    }else{
+                        throw exception("Ожидалась ; : " + posToken());
+                    }
                 } else {
                     throw exception("Ожидалась операция присваения с объявлением переменной: " + posToken());
                 }
             }else if(typeToken() == TypeToken.KW_End) {
-                nextToken();
                 return true;
             }else{
                 throw exception("Ожидалась операция объявления переменной: " + posToken());
+            }
+        }
+        return true;
+    }
+
+    private boolean isIf() throws LanguageException {
+        if(typeNextToken() == TypeToken.KW_If){
+            nextToken();
+        }
+        if(typeToken() == TypeToken.KW_If) {
+            nextToken();
+            if (typeToken() == TypeToken.KW_Round_Open_Bracket) {
+                nextToken();
+                if (isBool().reduce().getType() == TypeToken.KW_Bool_Value) {
+                    nextToken();
+                    if (typeToken() == TypeToken.KW_Round_Close_Bracket) {
+                        nextToken();
+                        if (typeToken() == TypeToken.KW_Figure_Open_Bracket) {
+                            curScope++;
+                            if (expr()) {
+                                if (typeToken() == TypeToken.KW_End) {
+                                    nextToken();
+                                }
+                                if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                    curScope--;
+                                    return true;
+                                } else {
+                                    throw exception("Не удалось найти конец тела If");
+                                }
+                            }
+                        } else {
+                            throw exception("Не удалось найти тело If");
+                        }
+                    } else {
+                        throw exception("Нету закрывающей скобки выражения If");
+                    }
+                } else {
+                    throw exception("В If возможно только булево выражение: " + posToken());
+                }
+            }else{
+                throw exception("В If ожидалась ( перед логическим выражением: " + posToken());
+            }
+        }
+        return true;
+    }
+
+    private boolean isFor() throws LanguageException {
+        if(typeToken() == TypeToken.KW_For){
+            nextToken();
+            if(typeToken() == TypeToken.KW_Round_Open_Bracket){
+                nextToken();
+                if(isDecl()){
+                    nextToken();
+                   if(isBool().reduce().getType() == TypeToken.KW_Bool_Value){
+                       nextToken();
+                       if(typeToken() == TypeToken.KW_End) {
+                           nextToken();
+                           if(isDecl()) {
+                               nextToken();
+                               if(typeToken() == TypeToken.KW_Round_Close_Bracket) {
+                                   nextToken();
+                                   if(typeToken() == TypeToken.KW_Figure_Open_Bracket) {
+                                       curScope++;
+                                       if (expr()) {
+                                           if (typeToken() == TypeToken.KW_End) {
+                                               nextToken();
+                                           }
+                                           if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                               curScope--;
+                                               return true;
+                                           } else {
+                                               throw exception("Не удалось найти конец тела for");
+                                           }
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   }
+                }
             }
         }
         return true;
@@ -181,12 +274,12 @@ public class Parser {
         nextToken();
         System.out.println("isAssignExpr получила токен под номером: " + posToken);
         Token temp = isBool().reduce();
-        System.out.println("isAssignExpr ответ: " + temp);
+        System.out.println("isAssignExpr ответ: " + temp + " Для: " + assignToken);
         switch (assignToken.getType()){
             case KW_Int:{
                 if(temp.getType() == TypeToken.KW_Num_Value){
                     System.out.println("Ответ числового выражения: " + temp.getAttrib().get("numValue"));
-                    getLastVar().getAttrib().put("numValue", temp.getAttrib().get("numValue"));
+                    assignToken.getAttrib().put("numValue", temp.getAttrib().get("numValue"));
                     return true;
                 }else{
                     setTokenPos(Integer.parseInt(assignToken.getAttrib().get("tokenNumber")));
@@ -196,7 +289,7 @@ public class Parser {
             case KW_Bool:{
                 if(temp.getType() == TypeToken.KW_Bool_Value){
                     System.out.println("Ответ логического выражения: " + temp.getAttrib().get("boolValue"));
-                    getLastVar().getAttrib().put("boolValue", temp.getAttrib().get("boolValue"));
+                    assignToken.getAttrib().put("boolValue", temp.getAttrib().get("boolValue"));
                     return true;
                 }else{
                     setTokenPos(Integer.parseInt(assignToken.getAttrib().get("tokenNumber")));
@@ -215,7 +308,7 @@ public class Parser {
         left - менее преоритетное значение
             left -> left KW_Op_Plus right | left KW_Op_Minus right | right
      */
-    public Token isBool() throws LanguageException {
+    private Token isBool() throws LanguageException {
         System.out.println("isBool получила токен: " + currentToken);
         Token x = isLeft();
         while(typeNextToken() == TypeToken.KW_Eq || typeNextToken() == TypeToken.KW_Low || typeNextToken() == TypeToken.KW_More){
@@ -296,7 +389,9 @@ public class Parser {
             }
             case KW_Name:{
                 if(existVar(currentToken.getAttrib().get("name"))){
-                    Token temp = vars.get(curVar);
+                    Token clone = vars.get(curVar);
+                    Token temp = new Token(clone.getType(), "temp", "temp");
+                    temp.cloneAttr(clone.getAttrib());
                     System.out.println("Получили перменную по имени: " + temp);
                     if(temp.getType() == TypeToken.KW_Int)
                     {
@@ -324,7 +419,7 @@ public class Parser {
             case KW_Int: {
                 nextToken();
                 if (typeToken() != TypeToken.KW_Name) {
-                    throw exception("Не удалось инициализировать переменную: " + posToken());
+                    throw exception("Не удалось инициализировать переменную типа int: " + posToken());
                 } else if (existVar(currentToken.getAttrib().get("name"))) {
                     throw exception("Повторная инициализация переменной: " + posToken());
                 } else {
@@ -342,7 +437,7 @@ public class Parser {
             case KW_String: {
                 nextToken();
                 if (typeToken() != TypeToken.KW_Name) {
-                    throw exception("Не удалось инициализировать переменную: " + posToken());
+                    throw exception("Не удалось инициализировать переменную типа String: " + posToken());
                 } else if (existVar(currentToken.getAttrib().get("name"))) {
                     throw exception("Повторная инициализация переменной: " + posToken());
                 } else {
@@ -360,7 +455,7 @@ public class Parser {
             case KW_Bool:{
                 nextToken();
                 if (typeToken() != TypeToken.KW_Name) {
-                    throw exception("Не удалось инициализировать переменную: " + posToken());
+                    throw exception("Не удалось инициализировать переменную типа bool: " + posToken());
                 } else if (existVar(currentToken.getAttrib().get("name"))) {
                     throw exception("Повторная инициализация переменной: " + posToken());
                 } else {
@@ -401,7 +496,7 @@ public class Parser {
 
     private boolean existVar(String name) {
         for (Variable var : vars) {
-            if (var.getAttrib().get("name").equals(name)) {
+            if (var.getAttrib().get("name").equals(name) && Integer.parseInt(var.getAttrib().get("scope")) <= curScope) {
                 curVar = vars.indexOf(var);
                 return true;
             }
@@ -423,4 +518,9 @@ public class Parser {
         exception.setPosToken(posToken);
         return exception;
     }
+
+    public ArrayList<Token> getTokens(){
+        return tokens;
+    }
+
 }

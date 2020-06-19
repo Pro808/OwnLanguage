@@ -17,9 +17,11 @@ public class Logic extends Token {
             Token error = new Token(TypeToken.KW_Error, "name", "Не возможно выполнить логическую операцию. Оба токена должны иметь тип числа или логики: ");
             this.op = error;
         }
-        if(op.getType() == TypeToken.KW_Low || op.getType() == TypeToken.KW_More){
-            Token error = new Token(TypeToken.KW_Error, "name", "Не возможное применение операции к boolean: ");
-            this.op = error;
+        if(isBooleans()) {
+            if (op.getType() == TypeToken.KW_Low || op.getType() == TypeToken.KW_More) {
+                Token error = new Token(TypeToken.KW_Error, "name", "Не возможное применение операции к boolean: ");
+                this.op = error;
+            }
         }
         System.out.println("Создали Logic c OP: " + this.op.getType());
     }
@@ -83,9 +85,11 @@ public class Logic extends Token {
                 }
                 case KW_Low:{
                     result = value1 < value2;
+                    break;
                 }
                 case KW_More:{
                     result = value1 > value2;
+                    break;
                 }
             }
             temp.addAttr("boolValue", Boolean.toString(result));

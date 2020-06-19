@@ -33,15 +33,15 @@ public class Lexer {
     }
 
     public Lexer(String programData) {
-        this.inputProgramData = programData + ";";
+        this.inputProgramData = programData;
         addWord("int", TypeToken.KW_Int);
         addWord("bool", TypeToken.KW_Bool);
         addWord("string", TypeToken.KW_String);
         addWord("print", TypeToken.KW_Print);
         addWord("if", TypeToken.KW_If);
         addWord("else", TypeToken.KW_Else);
-        addWord("while", TypeToken.KW_For);
-        addWord("for", TypeToken.KW_While);
+        addWord("while", TypeToken.KW_While);
+        addWord("for", TypeToken.KW_For);
         addWord("true", TypeToken.KW_True);
         addWord("false", TypeToken.KW_False);
     }

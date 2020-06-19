@@ -18,7 +18,7 @@ public class ColorFy {
     private String path;
     private int tokenErrorPos = -10;
     private int curToken = 0;
-
+    private int curScope = 0;
     public ColorFy(ArrayList<Token> tokens, String path){
         this.tokens = tokens;
         this.path = path;
@@ -76,13 +76,21 @@ public class ColorFy {
                 "    </style>" +
                 "</head>\n" +
                 "<body style=\"background: #2B2B2B;\">\n");
+
         for (Token token: tokens
              ) {
+            String scTemp = token.getAttrib().get("scope");
+
+            if(scTemp != null){
+                curScope = Integer.parseInt(scTemp);
+            }else{
+                curScope = 0;
+            }
             switch (token.getType()){
                 case KW_Int:
                 case KW_String:
                 case KW_Bool:{
-                    str.append(createSpan("blue", token.getAttrib().get("name")));
+                    str.append(createSpan("blue", addTabs() + token.getAttrib().get("name")));
                     break;
                 }
                 case KW_Num_Value:{
@@ -95,6 +103,14 @@ public class ColorFy {
                 }
                 case KW_Bool_Value:{
                     str.append(createSpan("#6897BBFF;", token.getAttrib().get("boolValue")));
+                    break;
+                }
+                case KW_If:{
+                    str.append(createSpan("orange", addTabs() + "if"));
+                    break;
+                }
+                case KW_For:{
+                    str.append(createSpan("orange", addTabs() + "for"));
                     break;
                 }
                 case KW_Assign:
@@ -159,6 +175,16 @@ public class ColorFy {
                     str.append("<br/>\n");
                     break;
                 }
+                case KW_Figure_Open_Bracket:{
+                    str.append(createSpan("orange",  "{"));
+                    str.append("<br/>\n");
+                    break;
+                }
+                case KW_Figure_Close_Bracket:{
+                    str.append(createSpan("orange", addTabs() + "}"));
+                    str.append("<br/>\n");
+                    break;
+                }
             }
             curToken++;
         }
@@ -172,6 +198,10 @@ public class ColorFy {
         StringBuilder span = new StringBuilder();
         span.append("<span class=\"token_"+curToken+"\" style=\"color:" + color + "\">" + text + "</span>\n");
         return span.toString();
+    }
+
+    private String addTabs(){
+        return "\u00A0\u00A0\u00A0\u00A0".repeat(curScope);
     }
 
 }

@@ -39,8 +39,6 @@ public class Main {
             });
         }
 
-        ColorFy coloredProgram = new ColorFy(lexer.getTokens(), path);
-
         Parser parser = new Parser(lexer.getTokens());
 
         try {
@@ -49,5 +47,6 @@ public class Main {
             e.printStackTrace();
         }
 
+        ColorFy coloredProgram = new ColorFy(parser.getTokens(), path);
     }
 }
