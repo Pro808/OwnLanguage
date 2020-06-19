@@ -56,11 +56,13 @@ public class Lexer {
     private Character nextChar() {
         current++;
         if(current >= inputProgramData.length()) {
+            current--;
            return null;
+        }else{
+            Character c = inputProgramData.charAt(current);
+            curChar = c;
+            return c;
         }
-        Character c = inputProgramData.charAt(current);
-        curChar = c;
-        return c;
     }
 
     private void returnBack(){

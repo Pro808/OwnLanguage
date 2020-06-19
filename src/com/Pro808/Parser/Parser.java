@@ -106,10 +106,9 @@ public class Parser {
 
     private Token nextToken() throws LanguageException {
         posToken++;
-        if(posToken > tokens.size()-1)
-        {
+        if (posToken > tokens.size() - 1) {
             posToken--;
-        }else{
+        } else {
             currentToken = tokens.get(posToken);
         }
         currentToken.getAttrib().put("scope", Integer.toString(curScope));
@@ -131,11 +130,10 @@ public class Parser {
 
     private TypeToken typeNextToken() {
         int temp = posToken + 1;
-        if(temp > tokens.size()-1)
-        {
-            temp = tokens.size()-1;
+        if (temp > tokens.size() - 1) {
+            temp = tokens.size() - 1;
             return tokens.get(temp).getType();
-        }else{
+        } else {
             return tokens.get(temp).getType();
         }
     }
@@ -143,7 +141,9 @@ public class Parser {
     /*        program -> expr*/
     public void program() throws LanguageException {
         while (posToken < tokens.size() - 1) {
-            expr();
+            if (!expr()) {
+                throw exception("Ошибка ! ");
+            }
         }
     }
 
@@ -153,11 +153,13 @@ public class Parser {
     private boolean expr() throws LanguageException {
         nextToken();
         System.out.println("Следующий токен: " + currentToken);
-        if (!isDecl() || !isIf() || !isFor()) {
-            throw exception("Не правильное написание начала кода");
+        if (!isDecl() && !isIf() && !isFor()) {
+            System.out.println("Expr return false;");
+            return false;
+        } else {
+            System.out.println("Обработано токенов " + posToken + " из " + (tokens.size() - 1));
+            return true;
         }
-        System.out.println("Обработано токенов " + posToken + " из " + (tokens.size() - 1));
-        return true;
     }
 
     /*
@@ -167,31 +169,32 @@ public class Parser {
         if (isVar()) {
             Variable temp = getLastVar();
             if (typeToken() == TypeToken.KW_Assign) {
-                System.out.println("Перед Assign получили: " + temp);
                 if (isAssign_Expr(temp)) {
                     nextToken();
-                    if(typeToken() == TypeToken.KW_End) {
+                    if (typeToken() == TypeToken.KW_End) {
                         return true;
-                    }else{
+                    } else {
                         throw exception("Ожидалась ; : " + posToken());
                     }
                 } else {
                     throw exception("Ожидалась операция присваения с объявлением переменной: " + posToken());
                 }
-            }else if(typeToken() == TypeToken.KW_End) {
+            } else if (typeToken() == TypeToken.KW_End) {
                 return true;
-            }else{
+            } else {
                 throw exception("Ожидалась операция объявления переменной: " + posToken());
             }
+        } else {
+            System.out.println("Decl return false;");
+            return false;
         }
-        return true;
     }
 
     private boolean isIf() throws LanguageException {
-        if(typeNextToken() == TypeToken.KW_If){
+        if (typeNextToken() == TypeToken.KW_If) {
             nextToken();
         }
-        if(typeToken() == TypeToken.KW_If) {
+        if (typeToken() == TypeToken.KW_If) {
             nextToken();
             if (typeToken() == TypeToken.KW_Round_Open_Bracket) {
                 nextToken();
@@ -201,16 +204,18 @@ public class Parser {
                         nextToken();
                         if (typeToken() == TypeToken.KW_Figure_Open_Bracket) {
                             curScope++;
-                            if (expr()) {
-                                if (typeToken() == TypeToken.KW_End) {
-                                    nextToken();
-                                }
-                                if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
-                                    curScope--;
-                                    return true;
-                                } else {
-                                    throw exception("Не удалось найти конец тела If");
-                                }
+                            while (expr() == true) {
+                                continue;
+                            }
+                            System.out.println("Текущий токен: " + currentToken);
+                            if (typeToken() == TypeToken.KW_End) {
+                                nextToken();
+                            }
+                            if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                curScope--;
+                                return true;
+                            } else {
+                                throw exception("Не удалось найти конец тела If");
                             }
                         } else {
                             throw exception("Не удалось найти тело If");
@@ -221,50 +226,69 @@ public class Parser {
                 } else {
                     throw exception("В If возможно только булево выражение: " + posToken());
                 }
-            }else{
+            } else {
                 throw exception("В If ожидалась ( перед логическим выражением: " + posToken());
             }
+        } else {
+            System.out.println("If return false;");
+            return false;
         }
-        return true;
     }
 
     private boolean isFor() throws LanguageException {
-        if(typeToken() == TypeToken.KW_For){
+        if (typeToken() == TypeToken.KW_For) {
             nextToken();
-            if(typeToken() == TypeToken.KW_Round_Open_Bracket){
+            if (typeToken() == TypeToken.KW_Round_Open_Bracket) {
                 nextToken();
-                if(isDecl()){
+                if (isDecl()) {
                     nextToken();
-                   if(isBool().reduce().getType() == TypeToken.KW_Bool_Value){
-                       nextToken();
-                       if(typeToken() == TypeToken.KW_End) {
-                           nextToken();
-                           if(isDecl()) {
-                               nextToken();
-                               if(typeToken() == TypeToken.KW_Round_Close_Bracket) {
-                                   nextToken();
-                                   if(typeToken() == TypeToken.KW_Figure_Open_Bracket) {
-                                       curScope++;
-                                       if (expr()) {
-                                           if (typeToken() == TypeToken.KW_End) {
-                                               nextToken();
-                                           }
-                                           if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
-                                               curScope--;
-                                               return true;
-                                           } else {
-                                               throw exception("Не удалось найти конец тела for");
-                                           }
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                   }
+                    if (isBool().reduce().getType() == TypeToken.KW_Bool_Value) {
+                        nextToken();
+                        if (typeToken() == TypeToken.KW_End) {
+                            nextToken();
+                            if (isDecl()) {
+                                nextToken();
+                                if (typeToken() == TypeToken.KW_Round_Close_Bracket) {
+                                    nextToken();
+                                    if (typeToken() == TypeToken.KW_Figure_Open_Bracket) {
+                                        curScope++;
+                                        while (expr()) {
+                                        }{}
+                                        if (typeToken() == TypeToken.KW_End) {
+                                            nextToken();
+                                        }
+                                        if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                            curScope--;
+                                            return true;
+                                        } else {
+                                            throw exception("Не удалось найти конец тела for");
+                                        }
+
+                                    } else {
+                                        throw exception("Не удалось найти начало тела for");
+                                    }
+                                } else {
+                                    throw exception("Не удалось найти конец выражения for. Ожидалась ;");
+                                }
+                            } else {
+                                throw exception("ожидалось выражения цикла for");
+                            }
+                        } else {
+                            throw exception("Ожидалась точка с запятой");
+                        }
+                    } else {
+                        throw exception("Условие выполнения цикла for должно иметь тип логики ");
+                    }
+                } else {
+                    throw exception("Ожидалось объявление переменной дляя цикла for");
                 }
+            } else {
+                throw exception("Ожидалась (  после for");
             }
+        } else {
+            System.out.println("For return false;");
+            return false;
         }
-        return true;
     }
 
     /*
@@ -272,26 +296,26 @@ public class Parser {
      */
     private boolean isAssign_Expr(Token assignToken) throws LanguageException {
         nextToken();
-        System.out.println("isAssignExpr получила токен под номером: " + posToken);
+//        System.out.println("isAssignExpr получила токен под номером: " + posToken);
         Token temp = isBool().reduce();
         System.out.println("isAssignExpr ответ: " + temp + " Для: " + assignToken);
-        switch (assignToken.getType()){
-            case KW_Int:{
-                if(temp.getType() == TypeToken.KW_Num_Value){
+        switch (assignToken.getType()) {
+            case KW_Int: {
+                if (temp.getType() == TypeToken.KW_Num_Value) {
                     System.out.println("Ответ числового выражения: " + temp.getAttrib().get("numValue"));
                     assignToken.getAttrib().put("numValue", temp.getAttrib().get("numValue"));
                     return true;
-                }else{
+                } else {
                     setTokenPos(Integer.parseInt(assignToken.getAttrib().get("tokenNumber")));
                     throw exception("Неправильное приведение типов: " + assignToken.getAttrib().get("pos"));
                 }
             }
-            case KW_Bool:{
-                if(temp.getType() == TypeToken.KW_Bool_Value){
+            case KW_Bool: {
+                if (temp.getType() == TypeToken.KW_Bool_Value) {
                     System.out.println("Ответ логического выражения: " + temp.getAttrib().get("boolValue"));
                     assignToken.getAttrib().put("boolValue", temp.getAttrib().get("boolValue"));
                     return true;
-                }else{
+                } else {
                     setTokenPos(Integer.parseInt(assignToken.getAttrib().get("tokenNumber")));
                     throw exception("Неправильное приведение типов: " + assignToken.getAttrib().get("pos"));
                 }
@@ -309,100 +333,98 @@ public class Parser {
             left -> left KW_Op_Plus right | left KW_Op_Minus right | right
      */
     private Token isBool() throws LanguageException {
-        System.out.println("isBool получила токен: " + currentToken);
+//        System.out.println("isBool получила токен: " + currentToken);
         Token x = isLeft();
-        while(typeNextToken() == TypeToken.KW_Eq || typeNextToken() == TypeToken.KW_Low || typeNextToken() == TypeToken.KW_More){
+        while (typeNextToken() == TypeToken.KW_Eq || typeNextToken() == TypeToken.KW_Low || typeNextToken() == TypeToken.KW_More) {
             Token next = nextToken();
             nextToken();
             x = new Logic(next, x, isRight());
-            if(x.getType() == TypeToken.KW_Error){
+            if (x.getType() == TypeToken.KW_Error) {
                 throw exception(x.getOpToken().getAttrib().get("name") + " " + currentToken.getAttrib().get("pos"));
             }
         }
-        System.out.println("isBool вернуло токен: " + x);
+//        System.out.println("isBool вернуло токен: " + x);
         return x;
     }
 
     private Token isLeft() throws LanguageException {
-        System.out.println("isLeft получила токен: " + currentToken);
+//        System.out.println("isLeft получила токен: " + currentToken);
         Token x = isRight();
-        while(typeNextToken() == TypeToken.KW_Op_Plus || typeNextToken() == TypeToken.KW_Op_Minus){
+        while (typeNextToken() == TypeToken.KW_Op_Plus || typeNextToken() == TypeToken.KW_Op_Minus) {
             Token next = nextToken();
             nextToken();
             x = new Arith(next, x, isRight());
-            if(x.getType() == TypeToken.KW_Error){
+            if (x.getType() == TypeToken.KW_Error) {
                 throw exception(x.getOpToken().getAttrib().get("name") + " " + currentToken.getAttrib().get("pos"));
             }
         }
-        System.out.println("isLeft вернуло токен: " + x);
+//        System.out.println("isLeft вернуло токен: " + x);
         return x;
     }
 
     private Token isRight() throws LanguageException {
-        System.out.println("isRight получила токен: " + currentToken);
+//        System.out.println("isRight получила токен: " + currentToken);
         Token x = isUnary();
-        while(typeNextToken() == TypeToken.KW_Op_Mul || typeNextToken() == TypeToken.KW_Op_Div || typeNextToken() == TypeToken.KW_Op_Pow){
+        while (typeNextToken() == TypeToken.KW_Op_Mul || typeNextToken() == TypeToken.KW_Op_Div || typeNextToken() == TypeToken.KW_Op_Pow) {
             Token next = nextToken();
             nextToken();
             x = new Arith(next, x, isUnary());
-            if(x.getType() == TypeToken.KW_Error){
+            if (x.getType() == TypeToken.KW_Error) {
                 throw exception(x.getOpToken().getAttrib().get("name") + " " + currentToken.getAttrib().get("pos"));
             }
         }
-        System.out.println("isRight вернуло токен: " + x);
+//        System.out.println("isRight вернуло токен: " + x);
         return x;
     }
 
     private Token isUnary() throws LanguageException {
-        System.out.println("isUnary получила токен: " + currentToken);
+//        System.out.println("isUnary получила токен: " + currentToken);
         Token x = currentToken;
-        if(x.getType() == TypeToken.KW_Op_Minus){
+        if (x.getType() == TypeToken.KW_Op_Minus) {
             nextToken();
             x = new Unary(x, isUnary());
-            if(x.getType() == TypeToken.KW_Error){
+            if (x.getType() == TypeToken.KW_Error) {
                 throw exception(x.getOpToken().getAttrib().get("name") + " " + currentToken.getAttrib().get("pos"));
             }
             return x;
-        }else{
+        } else {
             return isValue();
         }
     }
 
     private Token isValue() throws LanguageException {
-        System.out.println("isValue получила токен: " + currentToken);
-        switch (typeToken()){
-            case KW_Round_Open_Bracket:{
+//        System.out.println("isValue получила токен: " + currentToken);
+        switch (typeToken()) {
+            case KW_Round_Open_Bracket: {
                 nextToken();
                 Token x = isBool();
                 nextToken();
-                if(typeToken() == TypeToken.KW_Round_Close_Bracket){
+                if (typeToken() == TypeToken.KW_Round_Close_Bracket) {
                     return x;
-                }else{
+                } else {
                     throw exception("Нету закрывающей скобки: " + posToken());
                 }
             }
             case KW_String_Value:
             case KW_Bool_Value:
-            case KW_Num_Value:{
-                System.out.println("isValue вернуло число: " + currentToken);
+            case KW_Num_Value: {
+//                System.out.println("isValue вернуло число: " + currentToken);
                 return currentToken;
             }
-            case KW_Name:{
-                if(existVar(currentToken.getAttrib().get("name"))){
+            case KW_Name: {
+                if (existVar(currentToken.getAttrib().get("name"))) {
                     Token clone = vars.get(curVar);
                     Token temp = new Token(clone.getType(), "temp", "temp");
                     temp.cloneAttr(clone.getAttrib());
-                    System.out.println("Получили перменную по имени: " + temp);
-                    if(temp.getType() == TypeToken.KW_Int)
-                    {
+//                    System.out.println("Получили перменную по имени: " + temp);
+                    if (temp.getType() == TypeToken.KW_Int) {
                         temp.setType(TypeToken.KW_Num_Value);
                     }
-                    if(temp.getType() == TypeToken.KW_Bool)
-                    {
+                    if (temp.getType() == TypeToken.KW_Bool) {
                         temp.setType(TypeToken.KW_Bool_Value);
                     }
                     return temp;
-                }else{
+                } else {
                     throw exception("Использованная переменная в выражении не определена: " + posToken());
                 }
             }
@@ -427,7 +449,7 @@ public class Parser {
                     nextToken();
                     if (isClose()) {
                         createVar(TypeToken.KW_Int, temp);
-                        return false;
+                        return true;
                     } else {
                         createVar(TypeToken.KW_Int, temp);
                         return true;
@@ -445,14 +467,14 @@ public class Parser {
                     nextToken();
                     if (isClose()) {
                         createVar(TypeToken.KW_String, temp);
+                        return true;
                     } else {
                         createVar(TypeToken.KW_String, temp);
                         return true;
                     }
                 }
-                break;
             }
-            case KW_Bool:{
+            case KW_Bool: {
                 nextToken();
                 if (typeToken() != TypeToken.KW_Name) {
                     throw exception("Не удалось инициализировать переменную типа bool: " + posToken());
@@ -463,33 +485,32 @@ public class Parser {
                     nextToken();
                     if (isClose()) {
                         createVar(TypeToken.KW_Bool, temp);
+                        return true;
                     } else {
                         createVar(TypeToken.KW_Bool, temp);
                         return true;
                     }
                 }
-                break;
             }
-            case KW_Name:{
-                if(existVar(currentToken.getAttrib().get("name"))){
+            case KW_Name: {
+                if (existVar(currentToken.getAttrib().get("name"))) {
                     nextToken();
                     return true;
-                }else{
+                } else {
                     throw exception("Переменная не инициализирована: " + posToken());
                 }
             }
             default:
-              return false;
+                return false;
         }
-        return false;
     }
 
-    private void createVar(TypeToken type,Token tok) {
+    private void createVar(TypeToken type, Token tok) {
         Variable temp = new Variable(type, "name", tok.getAttrib().get("name"));
         temp.cloneAttr(tok.getAttrib());
         temp.addAttr("value", "NULL");
         temp.addAttr("scope", Integer.toString(curScope));
-        temp.addAttr("tokenNumber", Integer.toString(posToken-1));
+        temp.addAttr("tokenNumber", Integer.toString(posToken - 1));
         vars.add(temp);
         curVar = vars.indexOf(temp);
     }
@@ -519,7 +540,7 @@ public class Parser {
         return exception;
     }
 
-    public ArrayList<Token> getTokens(){
+    public ArrayList<Token> getTokens() {
         return tokens;
     }
 

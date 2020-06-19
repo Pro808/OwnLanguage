@@ -2,6 +2,7 @@ package com.Pro808;
 
 import com.Pro808.Lexer.Lexer;
 import com.Pro808.Parser.Parser;
+import com.Pro808.Polk.Polis;
 import com.Pro808.Token.Token;
 import com.Pro808.Token.TypeToken;
 import com.Pro808.Utils.ColorFy;
@@ -48,5 +49,10 @@ public class Main {
         }
 
         ColorFy coloredProgram = new ColorFy(parser.getTokens(), path);
+
+        Polis polis = new Polis(parser.getTokens());
+
+        polis.generate();
+
     }
 }

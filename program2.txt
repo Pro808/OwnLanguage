@@ -2,7 +2,7 @@ int check = (2 * (2 + (2/2)));
 check = (1);
 
 if(check > 10){
-int check = 0;
+check = 0;
 }
 
 
