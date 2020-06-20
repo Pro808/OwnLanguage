@@ -2,3 +2,22 @@ int SomeNumber = 10;
 int SecondNumber = 20;
 SomeNumber = 2 + 2 * 2 + 2 ** 4 * 2;
 bool Bool;
+
+
+
+int var = 10 + 20 * 2;
+
+if(1== 2){
+    int f = 0;
+    if(3 == 5){
+        int d;
+        int g =1;
+    }
+}
+int d =1;
+
+if(false == true){
+   int f =1;
+}
+
+bool tr = true;

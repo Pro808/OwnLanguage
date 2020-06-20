@@ -152,11 +152,13 @@ public class Parser {
      */
     private boolean expr() throws LanguageException {
         nextToken();
+        if (typeToken() == TypeToken.KW_End) {
+            nextToken();
+        }
         System.out.println("Следующий токен: " + currentToken);
         if (!isDecl() && !isIf() && !isFor()) {
-            System.out.println("Expr return false;");
             return false;
-        } else {
+        }else{
             System.out.println("Обработано токенов " + posToken + " из " + (tokens.size() - 1));
             return true;
         }
@@ -191,9 +193,6 @@ public class Parser {
     }
 
     private boolean isIf() throws LanguageException {
-        if (typeNextToken() == TypeToken.KW_If) {
-            nextToken();
-        }
         if (typeToken() == TypeToken.KW_If) {
             nextToken();
             if (typeToken() == TypeToken.KW_Round_Open_Bracket) {
@@ -204,14 +203,14 @@ public class Parser {
                         nextToken();
                         if (typeToken() == TypeToken.KW_Figure_Open_Bracket) {
                             curScope++;
-                            while (expr() == true) {
+                            while (expr()) {
                                 continue;
                             }
-                            System.out.println("Текущий токен: " + currentToken);
                             if (typeToken() == TypeToken.KW_End) {
                                 nextToken();
                             }
                             if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                deleteVars();
                                 curScope--;
                                 return true;
                             } else {
@@ -253,17 +252,14 @@ public class Parser {
                                     if (typeToken() == TypeToken.KW_Figure_Open_Bracket) {
                                         curScope++;
                                         while (expr()) {
-                                        }{}
-                                        if (typeToken() == TypeToken.KW_End) {
-                                            nextToken();
                                         }
                                         if (typeToken() == TypeToken.KW_Figure_Close_Bracket) {
+                                            deleteVars();
                                             curScope--;
                                             return true;
                                         } else {
                                             throw exception("Не удалось найти конец тела for");
                                         }
-
                                     } else {
                                         throw exception("Не удалось найти начало тела for");
                                     }
@@ -271,7 +267,7 @@ public class Parser {
                                     throw exception("Не удалось найти конец выражения for. Ожидалась ;");
                                 }
                             } else {
-                                throw exception("ожидалось выражения цикла for");
+                                throw exception("Ожидалось выражения цикла for");
                             }
                         } else {
                             throw exception("Ожидалась точка с запятой");
@@ -280,7 +276,7 @@ public class Parser {
                         throw exception("Условие выполнения цикла for должно иметь тип логики ");
                     }
                 } else {
-                    throw exception("Ожидалось объявление переменной дляя цикла for");
+                    throw exception("Ожидалось объявление переменной для цикла for");
                 }
             } else {
                 throw exception("Ожидалась (  после for");
@@ -508,11 +504,19 @@ public class Parser {
     private void createVar(TypeToken type, Token tok) {
         Variable temp = new Variable(type, "name", tok.getAttrib().get("name"));
         temp.cloneAttr(tok.getAttrib());
-        temp.addAttr("value", "NULL");
         temp.addAttr("scope", Integer.toString(curScope));
         temp.addAttr("tokenNumber", Integer.toString(posToken - 1));
         vars.add(temp);
         curVar = vars.indexOf(temp);
+    }
+
+    private void deleteVars() {
+        for (int i = 0; i < vars.size(); i++) {
+            Variable var = vars.get(i);
+            if (Integer.parseInt(var.getAttrib().get("scope")) == curScope) {
+                vars.remove(var);
+            }
+        }
     }
 
     private boolean existVar(String name) {
