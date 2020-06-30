@@ -44,6 +44,7 @@ public class Lexer {
         addWord("for", TypeToken.KW_For);
         addWord("true", TypeToken.KW_True);
         addWord("false", TypeToken.KW_False);
+        addWord("List", TypeToken.KW_List);
     }
     public void debug(boolean enable){
         this.debug = enable;
@@ -165,6 +166,10 @@ public class Lexer {
                 }
                 case ';': {
                     addToken(Word.KW_End);
+                    break;
+                }
+                case '.': {
+                    addToken(Word.KW_Access);
                     break;
                 }
             }

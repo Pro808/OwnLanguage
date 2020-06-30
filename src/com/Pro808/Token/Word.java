@@ -24,6 +24,7 @@ public class Word extends Token {
             KW_Op_Mul = new Word(TypeToken.KW_Op_Mul, "name", "KW_Op_Mul"),
             KW_Op_Div = new Word(TypeToken.KW_Op_Div, "name", "KW_Op_Div"),
             KW_Op_Pow = new Word(TypeToken.KW_Op_Pow, "name", "KW_Op_Pow"),
+            KW_Access = new Word(TypeToken.KW_Access, "name", "KW_Access"),
 
             KW_Quotes = new Word(TypeToken.KW_Quotes, "name", "KW_Quotes"),
             KW_Round_Open_Bracket = new Word(TypeToken.KW_Round_Open_Bracket, "name", "KW_Round_Open_Bracket"),

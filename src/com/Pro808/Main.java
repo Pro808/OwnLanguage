@@ -50,7 +50,7 @@ public class Main {
 
         ColorFy coloredProgram = new ColorFy(parser.getTokens(), path);
 
-        Polis polis = new Polis(parser.getTokens());
+        Polis polis = new Polis(lexer.getTokens());
 
         polis.generate();
 

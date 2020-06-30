@@ -38,7 +38,11 @@ public enum TypeToken {
 
     KW_End(28),
     KW_Print(29),
-    KW_Error(30);
+    KW_Error(30),
+    KW_List(31),
+    KW_Access(32),
+    KW_Return(33),
+    KW_Void(34);
 
     private int type;
 

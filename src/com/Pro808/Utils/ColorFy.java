@@ -89,7 +89,8 @@ public class ColorFy {
             switch (token.getType()){
                 case KW_Int:
                 case KW_String:
-                case KW_Bool:{
+                case KW_Bool:
+                case KW_List:{
                     str.append(createSpan("blue", addTabs() + token.getAttrib().get("name")));
                     break;
                 }
@@ -111,6 +112,10 @@ public class ColorFy {
                 }
                 case KW_For:{
                     str.append(createSpan("orange", addTabs() + "for"));
+                    break;
+                }
+                case KW_While:{
+                    str.append(createSpan("orange", addTabs() + "while"));
                     break;
                 }
                 case KW_Assign:
@@ -183,6 +188,10 @@ public class ColorFy {
                 case KW_Figure_Close_Bracket:{
                     str.append(createSpan("orange", addTabs() + "}"));
                     str.append("<br/>\n");
+                    break;
+                }
+                case KW_Access:{
+                    str.append(createSpan("orange",  "."));
                     break;
                 }
             }
