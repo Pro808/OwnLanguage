@@ -20,7 +20,7 @@ public class Polis {
         this.tokens = tokens;
     }
 
-    private Stack<String> stack = new Stack<String>();
+    private Stack<Token> stack = new Stack<Token>();
     private ArrayList<String> result = new ArrayList<>();
 
     private Token nextToken() {
@@ -35,11 +35,17 @@ public class Polis {
 
     public boolean isOp(TypeToken typeToken) {
         switch (typeToken) {
+            case KW_Assign:
             case KW_Op_Plus:
             case KW_Op_Minus:
             case KW_Op_Mul:
             case KW_Op_Div:
-            case KW_Op_Pow: {
+            case KW_Op_Pow:
+            case KW_Round_Open_Bracket:
+            case KW_Low:
+            case KW_More:
+            case KW_Eq:
+            case KW_Round_Close_Bracket: {
                 return true;
             }
             default: {
@@ -48,26 +54,31 @@ public class Polis {
         }
     }
 
-    public int GetPriority (Token token) {
+    public int GetPriority(Token token) {
         switch (token.getType()) {
             case KW_Assign:
                 return 0;
 
-            case KW_Op_Pow:
-                return 5;
+            case KW_Round_Open_Bracket:
+                return 2;
+            case KW_Round_Close_Bracket:
+                return 3;
 
-            case KW_Op_Mul:
-            case KW_Op_Div:
+            case KW_Op_Plus:
+            case KW_Op_Minus:
                 return 4;
 
             case KW_Low:
             case KW_More:
             case KW_Eq:
-                return 3;
+                return 5;
 
-            case KW_Op_Plus:
-            case KW_Op_Minus:
-                return 2;
+            case KW_Op_Mul:
+            case KW_Op_Div:
+                return 6;
+
+            case KW_Op_Pow:
+                return 7;
 
             default:
                 return 1;
@@ -76,28 +87,51 @@ public class Polis {
 
     public void generate() {
         System.out.println("Generation Polk Notation");
-        while (positionToken < tokens.size() - 2) {
+
+        while (positionToken < tokens.size() - 1) {
             nextToken();
+
+            if (tokenType() == KW_End) {
+                while (stack.size() > 0) {
+                    result.add(translate(stack.pop()));
+                }
+                continue;
+            }
+
             if (isOp(tokenType())) {
-
-
-
-                stack.push(translate(currentToken));
-            } else {
+                if (tokenType() == KW_Round_Open_Bracket) {
+                    stack.push(currentToken);
+                } else if (tokenType() == KW_Round_Close_Bracket) {
+                    Token s = stack.pop();
+                    while (s.getType() != KW_Round_Open_Bracket) {
+                        result.add(translate(s));
+                        s = stack.pop();
+                    }
+                } else {
+                    while (stack.size() > 0 && GetPriority(currentToken) <= GetPriority(stack.peek())) {
+                        result.add(translate(stack.pop()));
+                    }
+                    stack.push(currentToken);
+                }
+            }else{
                 result.add(translate(currentToken));
             }
         }
-        while (stack.size() > 0) {
-            result.add(stack.pop());
-        }
 
-        for (String value : result)
-            System.out.print(value + " ");
+
+
+        if (stack.size() > 0)
+            for (Token token : stack) {
+                result.add(translate(token));
+            }
+
+        for (String s : result) {
+            System.out.print(s + " ");
+        }
     }
 
 
     private String translate(Token token) {
-
         switch (token.getType()) {
             case KW_Int:
             case KW_String:
